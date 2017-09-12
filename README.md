@@ -47,35 +47,27 @@ HTTP based Encryption Service.
 
 ### Running the service
 
-```
-node app.js
-```
+    node app.js
 
  This will start the encryption service on port 8013
 
 
 ## Apis
 ### Encrypt
-    ```
     curl -X POST -H "Content-Type: application/json" -d '{
       "value":"sunbird"
     }' "http://localhost:8013/encrypt"
-    ```
     
-    ```
     curl -X POST -H "Content-Type: application/json" -d '{
         "value": { "name": "Ramesh Kumar", "phone": "9901990101" }
     }' "http://localhost:8013/encrypt/obj"
 
 ### Decrypt
 
-    ```
     curl -X POST -H "Content-Type: application/json" -d '{
       "value":"v1|62|DL6oW2QemDz/qmPcqP+mjD5x6Y6d2GGYkfeUHqyk9qazJ5O7Ep4bH06VX0D3iqQjckESFMXlE9nBDcy93JFVNw=="
     }' "http://localhost:8013/decrypt"
-    ```
 
-    ```
     curl -X POST -H "Content-Type: application/json" -d '{
       "value": { "name": "v1|62|DL6oW2QemDz/qmPcqP+mjD5x6Y6d2GGYkfeUHqyk9qazJ5O7Ep4bH06VX0D3iqQjckESFMXlE9nBDcy93JFVNw==",
                  "phone": "v1|77|DL6oW2QemDz/qmPcqP+mjD5x6Y6d2GGYkfeUHqyk9qazJ5O7Ep4bH06VX0D3iqQjckESFMXlE9nBDcy93JFVNw=="}
