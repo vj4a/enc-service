@@ -33,13 +33,15 @@ HTTP based Encryption Service.
 
 ### Generating keys
 
-1. Edit the DB credentials in the config/config.js file or export the following environment variables
+1. Edit the DB credentials by exporting the following environment variables
     1. DB_HOST
     1. DB_USER
     1. DB_PASSWORD
     1. DB_NAME
     1. DB_DIALECT - "postgres"|"mysql"|"sqlite"
-2. Run the key generation script
+1. Set the environment by exporting the `NODE_ENV` environment variable as `development` or `prod`
+    1. DB_PORT defaults to 9999 in prod. If the DB server is listening on a different port, DB_PORT must be set.
+1. Run the key generation script
       node scripts/master.js
 
  * This will ask you for encryption password twice and then add the following
