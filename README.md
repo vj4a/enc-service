@@ -42,8 +42,8 @@ HTTP based Encryption Service.
 1. Set the environment by exporting the `NODE_ENV` environment variable as `development` or `prod`
     1. DB_PORT defaults to 9999 in prod. If the DB server is listening on a different port, DB_PORT must be set.
 1. Run the key generation script
-      node scripts/master.js
 
+      `node scripts/master.js`
  * This will ask you for encryption password twice and then add the following
      * Encrypted RSA keys to the DB
  * The encryption password will be asked twice again -- same as above
@@ -54,12 +54,12 @@ HTTP based Encryption Service.
 
 ### Running the service
 
-    node app.js
+    node app.js < passwd &
 
- This will start the encryption service on port 8013
+ This will start the encryption service in the background on port 8013 by reading the master password from `passwd` file.
 
 
-## Apis
+## APIs
 ### Encrypt
     curl -X POST -H "Content-Type: application/json" -d '{
       "value":"sunbird"
