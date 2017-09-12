@@ -33,15 +33,20 @@ HTTP based Encryption Service.
 
 ### Generating keys
 
-1. Edit the DB credentials in the config/config.js file
+1. Edit the DB credentials in the config/config.js file or export the following environment variables
+    1. DB_HOST
+    1. DB_USER
+    1. DB_PASSWORD
+    1. DB_NAME
+    1. DB_DIALECT - "postgres"|"mysql"|"sqlite"
 2. Run the key generation script
-      ```
       node scripts/master.js
-      ```
 
- * This will add the following
+ * This will ask you for encryption password twice and then add the following
      * Encrypted RSA keys to the DB
+ * The encryption password will be asked twice again -- same as above
      * Encrypted RSA keys in a file(./keys/keys.json)
+ * The zip encryption password will be asked twice, this can be a different password
      * Protected zip of unencrypted keys (./keys/keys.zip)
 
 
