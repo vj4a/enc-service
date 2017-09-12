@@ -17,13 +17,10 @@ HTTP based Encryption Service.
 
 * Creating key type enum
 
-      ```
       CREATE TYPE "enum_Keys_type" AS ENUM ('MASTER','OTHER');
-      ```
 
 * Creating DB Table
 
-      ```
       CREATE TABLE "Keys" (
         id SERIAL PRIMARY KEY,
         public text NOT NULL,
@@ -33,7 +30,6 @@ HTTP based Encryption Service.
         "createdAt" timestamp with time zone NOT NULL,
         "updatedAt" timestamp with time zone NOT NULL
       );
-      ```
 
 ### Generating keys
 
