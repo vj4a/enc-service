@@ -8,11 +8,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://bitbucket.org/juspay/enc-service.git"
+    "url": "git@github.com:project-sunbird/enc-service.git"
   },
   "author": "",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/juspay/enc-service#readme",
+  "homepage": "https://github.com/project-sunbird/enc-service#readme",
   "dependencies": {
     "asyncawait": "^1.0.6",
     "body-parser": "^1.15.2",
