@@ -101,16 +101,14 @@ The type would have to be supplied as "type enum('MASTER', 'OTHER')" in Mysql.
        }
     }' "http://localhost:8013/sign"
     Sample response:
-    [
-    {
+    [{
         "signatureValue": "v1|2|PKCS1|Zof/AJu/ALQtD0OjuBFvs8dsZ/OfD08mC30ex5g1P1jV0IJYIHPscF0jGdGec/KkHmyvKkLU/hHiQ0czzr6Cvg==",
         "keyId": 2
     },
     {
         "signatureValue": "v1|3|PKCS1|tV0EHm0wKclS6v/gOhhaP51QcV39wUYPxYZCoA+4cGM2NicFGtjdMnV23HxZUR0CVxpVo91qBKeHbgpAD3/7pQ==",
         "keyId": 3
-    }
-    ]`
+    }]`
 
     Sign a single entity
     `curl -X POST -H "Content-Type: application/json" -d '{
@@ -132,15 +130,74 @@ The type would have to be supplied as "type enum('MASTER', 'OTHER')" in Mysql.
         ]
     }' "http://localhost:8013/sign"
     Sample response:
-    [
-    {
+    [{
         "signatureValue": "v1|3|PKCS1|YzlNSN++9wFO7hBEXLgM3wBqWnCOi/euSyrbFSigrQe+t+ZwB0VNLfWGWdjwY8v28JTmns7T5cEArOcXeuqDbQ==",
         "keyId": 3
     },
     {
         "signatureValue": "v1|3|PKCS1|oVYESGSI3C2Bc/gt+PjddJmmAPd7Eo+sPJ6FUzUw6FBlylAaShOYrpXqQbbsSLx3IkPwVYdfIgo5Y/ZatU8WyA==",
         "keyId": 3
-    }
-    ]`
+    }]`
 
 ### Verify
+    Verify a single attribute
+    `curl -X POST -H "Content-Type: application/json" -d '{
+      "value":{ 
+            "claim": "sunbird",
+            "signatureValue": "v1|2|PKCS1|vJUolu7lKXa2Jwba0VS8xPDbRUnPdyaIFe9fhPd8+fAybY3dJmiupMcI2VHlOhOWCT5+347PgPix8nn5hrs3Aw=="
+      }
+    }' "http://localhost:8013/verify"
+    Sample response:
+    true
+    `
+    
+    Verify multiple attributes at one go
+    `curl -X POST -H "Content-Type: application/json" -d '{
+        "value": [{
+                "claim": "Ramesh Kumar",
+                "signatureValue": "v1|2|PKCS1|Zof/AJu/ALQtD0OjuBFvs8dsZ/OfD08mC30ex5g1P1jV0IJYIHPscF0jGdGec/KkHmyvKkLU/hHiQ0czzr6Cvg=="
+            }, {
+                "claim": "9901990101",
+                "signatureValue": "v1|3|PKCS1|tV0EHm0wKclS6v/gOhhaP51QcV39wUYPxYZCoA+4cGM2NicFGtjdMnV23HxZUR0CVxpVo91qBKeHbgpAD3/7pQ=="
+        ]
+    }' "http://localhost:8013/verify"
+    Sample response:
+    [
+        true,
+        true
+    ]`
+
+    Verify a single entity
+    `curl -X POST -H "Content-Type: application/json" -d '{
+       "entity": {
+           "claim": {"name": "fruit", "color": "red"},
+	        "signatureValue": "v1|3|PKCS1|qsBPIU0EN1+I+5LkjhPbxjQuWPKQIfkhCrP9mwchqdufhnnteOHOL0ZZfsbg8AgTVqTHNuvY7RYMfN2+d0wtvw==" 
+        } 
+    }' "http://localhost:8013/verify"
+    Sample response:
+    true`
+
+    Verify multiple entities
+    `curl -X POST -H "Content-Type: application/json" -d '{
+       "entity":[{
+	        "claim": {"name": "fruit", "color": "red"},
+	        "signatureValue": "v1|3|PKCS1|qsAPIU0EN1+I+5LkjhPbxjQuWPKQIfkhCrP9mwchqdufhnnteOHOL0ZZfsbg8AgTVqTHNuvY7RYMfN2+d0wtvw=="
+        },{
+	        "claim":{"name": "apple", "shape": "round"},
+	        "signatureValue": "v1|2|PKCS1|X87ErciD6X6bFBYUjZ0gd88BtuOWBbGe6iS1Rx2dVuKkYpkVXU/OaGXJv68AaZaTNsDPVbKVbBQx5t6oLlq+Uw=="
+        }]
+    }' "http://localhost:8013/verify"
+    Sample response:
+    [
+        false,
+        true
+    ]`
+
+# Get keys
+    Get an active public key associated with the given identifier
+     `curl -X GET -H "Content-Type: application/json" "http://localhost:8013/keys/3"
+    Sample response:
+    -----BEGIN PUBLIC KEY-----
+MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANNCNWC5K484XsQEvSL8rkVtJlAV9nTsusuHbxiU5xKp7R5Pw2ueEteqwfgRri0sVzJrrI394Tn/FjyXDtW+dhsCAwEAAQ==
+-----END PUBLIC KEY-----
+    `
