@@ -13,7 +13,7 @@ const R = require("ramda");
  */
 const rsaHashAndSign = (message, hashAlgo, privateKey) => {
   var crt = ursa.createPrivateKey('-----BEGIN RSA PRIVATE KEY-----\n' + privateKey + '\n' + '-----END RSA PRIVATE KEY-----')
-  return crt.hashAndSign(hashAlgo, message, 'utf8', 'base64', false, 0);  
+  return crt.hashAndSign(hashAlgo, message, 'utf8', 'base64', true, 16);  
 }
 
 /**
@@ -26,7 +26,7 @@ const rsaHashAndSign = (message, hashAlgo, privateKey) => {
  */
 const rsaHashAndVerify = (signature, claim, hashAlgo, publicKey) => {
   var crt = ursa.createPublicKey('-----BEGIN PUBLIC KEY-----\n' + publicKey + '\n' + '-----END PUBLIC KEY-----')
-  return crt.hashAndVerify(hashAlgo, claim, signature, 'base64', false, 16);  
+  return crt.hashAndVerify(hashAlgo, claim, signature, 'base64', true, 16); 
 }
 
 exports.rsaHashAndSign = rsaHashAndSign;
