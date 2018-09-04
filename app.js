@@ -48,6 +48,11 @@ initRoutes = () => {
   app.get("/", (req, res) => {
     return res.send("UP");
   });
+
+  // Get public key specified by id
+  app.get("/keys/:id", (req, res) => {
+    return res.send(getPublicKey(req.params.id));
+  });
   
   // Encryption, Decryption
   app.post("/encrypt", (req, res) => {
@@ -105,6 +110,19 @@ const getKey = () => {
 const getKeyById = (keyId) => {
   return R.filter(key=>key.id==keyId,keyPairs)[0];
 };
+
+/** 
+ * Returns only active public keys 
+ * @param {number} keyId 
+ * */
+const getPublicKey = (keyId) => {
+  let key = getKeyById(keyId);
+  let publicKey = "";
+  if (key && key.active) {
+    publicKey = '-----BEGIN PUBLIC KEY-----\n' + key.public + '\n' + '-----END PUBLIC KEY-----';
+  }
+  return publicKey;
+}
 
 const encryptObj = (obj) => {
   return R.map(encryptValue, obj);
