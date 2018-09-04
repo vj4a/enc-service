@@ -197,7 +197,5 @@ The type would have to be supplied as "type enum('MASTER', 'OTHER')" in Mysql.
     Get an active public key associated with the given identifier
      `curl -X GET -H "Content-Type: application/json" "http://localhost:8013/keys/3"
     Sample response:
-    -----BEGIN PUBLIC KEY-----
-MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANNCNWC5K484XsQEvSL8rkVtJlAV9nTsusuHbxiU5xKp7R5Pw2ueEteqwfgRri0sVzJrrI394Tn/FjyXDtW+dhsCAwEAAQ==
------END PUBLIC KEY-----
+    -----BEGIN PUBLIC KEY-----MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANNCNWC5K484XsQEvSL8rkVtJlAV9nTsusuHbxiU5xKp7R5Pw2ueEteqwfgRri0sVzJrrI394Tn/FjyXDtW+dhsCAwEAAQ==-----END PUBLIC KEY-----
     `
