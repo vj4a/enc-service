@@ -1,6 +1,6 @@
 {
   "name": "enc-service",
-  "version": "1.2.0",
+  "version": "1.1.0",
   "description": "Supports encryption, decryption and signing, verification",
   "main": "app.js",
   "scripts": {
