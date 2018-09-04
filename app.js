@@ -14,6 +14,9 @@ const async = require("asyncawait/async");
 const await = require("asyncawait/await");
 const prompt = require("prompt");
 const cryptoUtils = require("./utils/cryptoUtils");
+const signatureUtils = require("./utils/signatureUtils");
+const signatureResponse = require("./classes/signResponse");
+const buffer = require("buffer").Buffer;
 const R = require("ramda");
 var keyPairs = [];
 
@@ -45,6 +48,8 @@ initRoutes = () => {
   app.get("/", (req, res) => {
     return res.send("UP");
   });
+  
+  // Encryption, Decryption
   app.post("/encrypt", (req, res) => {
     return res.send(encryptValue(req.body.value));
   });
@@ -57,6 +62,31 @@ initRoutes = () => {
   app.post("/decrypt/obj", (req, res) => {
     return res.send(decryptObj(req.body.value));
   });
+
+
+  // Signature, Verification
+  app.post("/sign", (req, res) => {
+    if (Array.isArray(req.body.value)) {
+      return res.send(signMultipleValues(req.body.value));
+    } else if (req.body.value) {
+      return res.send(signValue(req.body.value));
+    } else if (Array.isArray(req.body.entity)) {
+      return res.send(signMultipleEntities(req.body.entity))
+    } else if (req.body.entity) { 
+      return res.send(signEntity(req.body.entity));
+    }
+  })
+  app.post("/verify", (req, res) => {
+    if (Array.isArray(req.body.value)) {
+      return res.send(verifyMultipleValues(req.body.value));
+    } else if (req.body.value) {
+      return res.send(verifyValue(req.body.value))
+    } else if (Array.isArray(req.body.entity)) {
+      return res.send(verifyMultipleEntities(req.body.entity));
+    } else if (req.body.entity) {
+      return res.send(verifyEntity(req.body.entity))
+    }
+  })
 };
 
 startServer = () => {
@@ -64,6 +94,7 @@ startServer = () => {
     console.log("KeyService listening on port " + port + " in " + env + " mode");
   })
 };
+
 
 const getKey = () => {
   let activeKeys = R.filter(key=>key.active,keyPairs);
@@ -94,9 +125,59 @@ const decryptValue = (value) => {
   return cryptoUtils.rsaDecrypt(values[3],values[2],key.private);
 };
 
+const signValue = (value) => {
+  let key = getKey();
+  let signedVal = signatureUtils.rsaHashAndSign(value,config.hashAlgorithm,key.private);
+  let responseSignedVal = config.version+"|"+key.id+"|"+config.scheme+"|"+signedVal;
+
+  let result = new signatureResponse(responseSignedVal, key.id);
+  return result;
+};
+
+const signEntity = (entity) => {
+  return signValue(JSON.stringify(entity).trim())
+}
+
+const signMultipleValues = (value) => {
+  return R.map(signValue, value);
+};
+
+const signMultipleEntities = (value) => {
+  return R.map(signEntity, value);
+};
+
+const verifyValue = (obj) => {
+  let signatureValue = obj['signatureValue']
+  let claim = obj['claim']
+  if (typeof(claim) === 'object') {
+    claim = JSON.stringify(claim)
+  }
+  
+  console.log("object = " + claim )
+  console.log("sign = " + signatureValue)
+  
+  let values = signatureValue.split("|");
+  let key = getKeyById(values[1]);
+  return signatureUtils.rsaHashAndVerify(values[3], new buffer(claim.trim()).toString("base64"), config.hashAlgorithm, key.public);
+};
+
+const verifyMultipleValues = (values) => {
+  return R.map(verifyValue, values);
+}
+
+const verifyEntity = (entity) => {
+  return verifyValue(entity)
+}
+
+const verifyMultipleEntities = (values) => {
+  return R.map(verifyEntity, values);
+}
+
+
 loadKeys = async(() => {
   let password = await(getPassword());
   let keys = await(loadKeysFromDB());
+
   keys = R.map(key=>key.dataValues,keys);
   let masterKey = getMasterKey(password,keys);
   keyPairs = decryptKeys(masterKey,keys);
