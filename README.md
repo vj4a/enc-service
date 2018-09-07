@@ -84,118 +84,130 @@ The type would have to be supplied as "type enum('MASTER', 'OTHER')" in Mysql.
     }' "http://localhost:8013/decrypt/obj"
  
 ### Sign
-    Sign a single attribute
+#### Sign a single attribute
     `curl -X POST -H "Content-Type: application/json" -d '{
       "value":"sunbird"
-    }' "http://localhost:8013/sign"
-    Sample response:
-    {
-        "signatureValue": "v1|2|PKCS1|vJUolu7lKXa2Jwba0VS8xPDbRUnPdyaIFe9fhPd8+fAybY3dJmiupMcI2VHlOhOWCT5+347PgPix8nn5hrs3Aw==",
-        "keyId": 2
+    }' "http://localhost:8013/sign"`
+*Sample response*
+    `{
+        "signatureValue": "vJUolu7lKXa2Jwba0VS8xPDbRUnPdyaIFe9fhPd8+fAybY3dJmiupMcI2VHlOhOWCT5+347PgPix8nn5hrs3Aw==",
+        "keyId": 2,
+        "version": "1.0.0"
     }
     `
     
-    Sign multiple attributes at one go
+#### Sign multiple attributes at one go
     `curl -X POST -H "Content-Type: application/json" -d '{
         "value": ["Ramesh Kumar", "9901990101"]
        }
-    }' "http://localhost:8013/sign"
-    Sample response:
-    [{
-        "signatureValue": "v1|2|PKCS1|Zof/AJu/ALQtD0OjuBFvs8dsZ/OfD08mC30ex5g1P1jV0IJYIHPscF0jGdGec/KkHmyvKkLU/hHiQ0czzr6Cvg==",
-        "keyId": 2
+    }' "http://localhost:8013/sign"`
+*Sample response*
+    `[{
+        "signatureValue": "Zof/AJu/ALQtD0OjuBFvs8dsZ/OfD08mC30ex5g1P1jV0IJYIHPscF0jGdGec/KkHmyvKkLU/hHiQ0czzr6Cvg==",
+        "keyId": 2,
+        "version": "1.0.0"
     },
     {
-        "signatureValue": "v1|3|PKCS1|tV0EHm0wKclS6v/gOhhaP51QcV39wUYPxYZCoA+4cGM2NicFGtjdMnV23HxZUR0CVxpVo91qBKeHbgpAD3/7pQ==",
-        "keyId": 3
+        "signatureValue": "tV0EHm0wKclS6v/gOhhaP51QcV39wUYPxYZCoA+4cGM2NicFGtjdMnV23HxZUR0CVxpVo91qBKeHbgpAD3/7pQ==",
+        "keyId": 3,
+        "version": "1.0.0"
     }]`
 
-    Sign a single entity
+#### Sign a single entity
     `curl -X POST -H "Content-Type: application/json" -d '{
        "entity": {
            "name": "Kevin", "phone": "9901990103" 
         } 
-    }' "http://localhost:8013/sign"
-    Sample response:
-    {
-        "signatureValue": "v1|2|PKCS1|iv07RbttVQZeOpGF8SCJitPnV/sEWW0LN8hc2U2MDMcIw3INsp5c8mjJiyiKvO31lS7LEflj20EOVvRmI3cRyw==",
-        "keyId": 2
+    }' "http://localhost:8013/sign"`
+*Sample response*
+    `{
+        "signatureValue": "iv07RbttVQZeOpGF8SCJitPnV/sEWW0LN8hc2U2MDMcIw3INsp5c8mjJiyiKvO31lS7LEflj20EOVvRmI3cRyw==",
+        "keyId": 2,
+        "version": "1.0.0"
     }`
 
-    Sign multiple entities
+#### Sign multiple entities
     `curl -X POST -H "Content-Type: application/json" -d '{
        "entity": [  
                 {"name": "Ram", "phone": "9901990101" }, 
                 {"name": "John", "phone": "9901990102" }
         ]
-    }' "http://localhost:8013/sign"
-    Sample response:
-    [{
-        "signatureValue": "v1|3|PKCS1|YzlNSN++9wFO7hBEXLgM3wBqWnCOi/euSyrbFSigrQe+t+ZwB0VNLfWGWdjwY8v28JTmns7T5cEArOcXeuqDbQ==",
-        "keyId": 3
+    }' "http://localhost:8013/sign"`
+*Sample response*
+    `[{
+        "signatureValue": "YzlNSN++9wFO7hBEXLgM3wBqWnCOi/euSyrbFSigrQe+t+ZwB0VNLfWGWdjwY8v28JTmns7T5cEArOcXeuqDbQ==",
+        "keyId": 3,
+        "version": "1.0.0"
     },
     {
-        "signatureValue": "v1|3|PKCS1|oVYESGSI3C2Bc/gt+PjddJmmAPd7Eo+sPJ6FUzUw6FBlylAaShOYrpXqQbbsSLx3IkPwVYdfIgo5Y/ZatU8WyA==",
-        "keyId": 3
+        "signatureValue": "oVYESGSI3C2Bc/gt+PjddJmmAPd7Eo+sPJ6FUzUw6FBlylAaShOYrpXqQbbsSLx3IkPwVYdfIgo5Y/ZatU8WyA==",
+        "keyId": 3,
+        "version": "1.0.0"
     }]`
 
 ### Verify
-    Verify a single attribute
+#### Verify a single attribute
     `curl -X POST -H "Content-Type: application/json" -d '{
       "value":{ 
             "claim": "sunbird",
-            "signatureValue": "v1|2|PKCS1|vJUolu7lKXa2Jwba0VS8xPDbRUnPdyaIFe9fhPd8+fAybY3dJmiupMcI2VHlOhOWCT5+347PgPix8nn5hrs3Aw=="
+            "signatureValue": "vJUolu7lKXa2Jwba0VS8xPDbRUnPdyaIFe9fhPd8+fAybY3dJmiupMcI2VHlOhOWCT5+347PgPix8nn5hrs3Aw==",
+            "keyId": 2
       }
-    }' "http://localhost:8013/verify"
-    Sample response:
-    true
-    `
+    }' "http://localhost:8013/verify"` 
+*Sample response*
+    `true`
     
-    Verify multiple attributes at one go
+    
+#### Verify multiple attributes at one go
     `curl -X POST -H "Content-Type: application/json" -d '{
         "value": [{
                 "claim": "Ramesh Kumar",
-                "signatureValue": "v1|2|PKCS1|Zof/AJu/ALQtD0OjuBFvs8dsZ/OfD08mC30ex5g1P1jV0IJYIHPscF0jGdGec/KkHmyvKkLU/hHiQ0czzr6Cvg=="
+                "signatureValue": "Zof/AJu/ALQtD0OjuBFvs8dsZ/OfD08mC30ex5g1P1jV0IJYIHPscF0jGdGec/KkHmyvKkLU/hHiQ0czzr6Cvg==",
+                "keyId": 2
             }, {
                 "claim": "9901990101",
-                "signatureValue": "v1|3|PKCS1|tV0EHm0wKclS6v/gOhhaP51QcV39wUYPxYZCoA+4cGM2NicFGtjdMnV23HxZUR0CVxpVo91qBKeHbgpAD3/7pQ=="
+                "signatureValue": "tV0EHm0wKclS6v/gOhhaP51QcV39wUYPxYZCoA+4cGM2NicFGtjdMnV23HxZUR0CVxpVo91qBKeHbgpAD3/7pQ==",
+                "keyId": 3
         ]
-    }' "http://localhost:8013/verify"
-    Sample response:
-    [
+    }' "http://localhost:8013/verify"` 
+*Sample response*
+    `[
         true,
         true
     ]`
 
-    Verify a single entity
+#### Verify a single entity
     `curl -X POST -H "Content-Type: application/json" -d '{
        "entity": {
            "claim": {"name": "fruit", "color": "red"},
-	        "signatureValue": "v1|3|PKCS1|qsBPIU0EN1+I+5LkjhPbxjQuWPKQIfkhCrP9mwchqdufhnnteOHOL0ZZfsbg8AgTVqTHNuvY7RYMfN2+d0wtvw==" 
+	        "signatureValue": "qsBPIU0EN1+I+5LkjhPbxjQuWPKQIfkhCrP9mwchqdufhnnteOHOL0ZZfsbg8AgTVqTHNuvY7RYMfN2+d0wtvw==",
+            "keyId": 2
         } 
-    }' "http://localhost:8013/verify"
-    Sample response:
-    true`
+    }' "http://localhost:8013/verify"` 
+*Sample response*
+    `true`
 
-    Verify multiple entities
+#### Verify multiple entities
     `curl -X POST -H "Content-Type: application/json" -d '{
        "entity":[{
 	        "claim": {"name": "fruit", "color": "red"},
-	        "signatureValue": "v1|3|PKCS1|qsAPIU0EN1+I+5LkjhPbxjQuWPKQIfkhCrP9mwchqdufhnnteOHOL0ZZfsbg8AgTVqTHNuvY7RYMfN2+d0wtvw=="
+	        "signatureValue": "qsAPIU0EN1+I+5LkjhPbxjQuWPKQIfkhCrP9mwchqdufhnnteOHOL0ZZfsbg8AgTVqTHNuvY7RYMfN2+d0wtvw==",
+            "keyId": 2
         },{
 	        "claim":{"name": "apple", "shape": "round"},
-	        "signatureValue": "v1|2|PKCS1|X87ErciD6X6bFBYUjZ0gd88BtuOWBbGe6iS1Rx2dVuKkYpkVXU/OaGXJv68AaZaTNsDPVbKVbBQx5t6oLlq+Uw=="
+	        "signatureValue": "X87ErciD6X6bFBYUjZ0gd88BtuOWBbGe6iS1Rx2dVuKkYpkVXU/OaGXJv68AaZaTNsDPVbKVbBQx5t6oLlq+Uw==",
+            "keyId": 3
         }]
-    }' "http://localhost:8013/verify"
-    Sample response:
-    [
+    }' "http://localhost:8013/verify"`
+*Sample response*
+    `[
         false,
         true
     ]`
 
 # Get keys
-    Get an active public key associated with the given identifier
-     `curl -X GET -H "Content-Type: application/json" "http://localhost:8013/keys/3"
-    Sample response:
-    -----BEGIN PUBLIC KEY-----MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANNCNWC5K484XsQEvSL8rkVtJlAV9nTsusuHbxiU5xKp7R5Pw2ueEteqwfgRri0sVzJrrI394Tn/FjyXDtW+dhsCAwEAAQ==-----END PUBLIC KEY-----
+Get an active public key associated with the given identifier
+     `curl -X GET -H "Content-Type: application/json" "http://localhost:8013/keys/3"`
+*Sample response*
+    `-----BEGIN PUBLIC KEY-----MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANNCNWC5K484XsQEvSL8rkVtJlAV9nTsusuHbxiU5xKp7R5Pw2ueEteqwfgRri0sVzJrrI394Tn/FjyXDtW+dhsCAwEAAQ==-----END PUBLIC KEY-----
     `
