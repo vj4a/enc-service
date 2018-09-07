@@ -45,7 +45,7 @@ initMiddlewares = () => {
 };
 
 initRoutes = () => {
-  app.get("/", (req, res) => {
+  app.get("/", (req, res) => {   
     return res.send("UP");
   });
 
@@ -146,9 +146,7 @@ const decryptValue = (value) => {
 const signValue = (value) => {
   let key = getKey();
   let signedVal = signatureUtils.rsaHashAndSign(value,config.hashAlgorithm,key.private);
-  let responseSignedVal = config.version+"|"+key.id+"|"+config.scheme+"|"+signedVal;
-
-  let result = new signatureResponse(responseSignedVal, key.id);
+  let result = new signatureResponse(signedVal, key.id, config.version);
   return result;
 };
 
@@ -165,18 +163,15 @@ const signMultipleEntities = (value) => {
 };
 
 const verifyValue = (obj) => {
+  let keyId = obj['keyId']
   let signatureValue = obj['signatureValue']
   let claim = obj['claim']
   if (typeof(claim) === 'object') {
     claim = JSON.stringify(claim)
   }
   
-  console.log("object = " + claim )
-  console.log("sign = " + signatureValue)
-  
-  let values = signatureValue.split("|");
-  let key = getKeyById(values[1]);
-  return signatureUtils.rsaHashAndVerify(values[3], new buffer(claim.trim()).toString("base64"), config.hashAlgorithm, key.public);
+  let key = getKeyById(keyId);
+  return signatureUtils.rsaHashAndVerify(signatureValue, new buffer(claim.trim()).toString("base64"), config.hashAlgorithm, key.public);
 };
 
 const verifyMultipleValues = (values) => {

@@ -10,7 +10,7 @@ const config = {
       max:300
     },
     "scheme":"PKCS1",
-    "version":"v1",
+    "version":"1.0.0",
     "hashAlgorithm": "sha256"
   },
   "prod": {
@@ -24,7 +24,7 @@ const config = {
       max:300
     },
     "scheme":"PKCS1",
-    "version":"v1",
+    "version":"1.0.0",
     "hashAlgorithm": "sha256"
   }
 }
