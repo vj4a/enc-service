@@ -14,6 +14,9 @@ const async = require("asyncawait/async");
 const await = require("asyncawait/await");
 const prompt = require("prompt");
 const cryptoUtils = require("./utils/cryptoUtils");
+const signatureUtils = require("./utils/signatureUtils");
+const signatureResponse = require("./classes/signResponse");
+const buffer = require("buffer").Buffer;
 const R = require("ramda");
 var keyPairs = [];
 
@@ -42,9 +45,16 @@ initMiddlewares = () => {
 };
 
 initRoutes = () => {
-  app.get("/", (req, res) => {
+  app.get("/", (req, res) => {   
     return res.send("UP");
   });
+
+  // Get public key specified by id
+  app.get("/keys/:id", (req, res) => {
+    return res.send(getPublicKey(req.params.id));
+  });
+  
+  // Encryption, Decryption
   app.post("/encrypt", (req, res) => {
     return res.send(encryptValue(req.body.value));
   });
@@ -57,6 +67,31 @@ initRoutes = () => {
   app.post("/decrypt/obj", (req, res) => {
     return res.send(decryptObj(req.body.value));
   });
+
+
+  // Signature, Verification
+  app.post("/sign", (req, res) => {
+    if (Array.isArray(req.body.value)) {
+      return res.send(signMultipleValues(req.body.value));
+    } else if (req.body.value) {
+      return res.send(signValue(req.body.value));
+    } else if (Array.isArray(req.body.entity)) {
+      return res.send(signMultipleEntities(req.body.entity))
+    } else if (req.body.entity) { 
+      return res.send(signEntity(req.body.entity));
+    }
+  })
+  app.post("/verify", (req, res) => {
+    if (Array.isArray(req.body.value)) {
+      return res.send(verifyMultipleValues(req.body.value));
+    } else if (req.body.value) {
+      return res.send(verifyValue(req.body.value))
+    } else if (Array.isArray(req.body.entity)) {
+      return res.send(verifyMultipleEntities(req.body.entity));
+    } else if (req.body.entity) {
+      return res.send(verifyEntity(req.body.entity))
+    }
+  })
 };
 
 startServer = () => {
@@ -64,6 +99,7 @@ startServer = () => {
     console.log("KeyService listening on port " + port + " in " + env + " mode");
   })
 };
+
 
 const getKey = () => {
   let activeKeys = R.filter(key=>key.active,keyPairs);
@@ -74,6 +110,19 @@ const getKey = () => {
 const getKeyById = (keyId) => {
   return R.filter(key=>key.id==keyId,keyPairs)[0];
 };
+
+/** 
+ * Returns only active public keys 
+ * @param {number} keyId 
+ * */
+const getPublicKey = (keyId) => {
+  let key = getKeyById(keyId);
+  let publicKey = "";
+  if (key && key.active) {
+    publicKey = '-----BEGIN PUBLIC KEY-----\n' + key.public + '\n' + '-----END PUBLIC KEY-----';
+  }
+  return publicKey;
+}
 
 const encryptObj = (obj) => {
   return R.map(encryptValue, obj);
@@ -94,9 +143,54 @@ const decryptValue = (value) => {
   return cryptoUtils.rsaDecrypt(values[3],values[2],key.private);
 };
 
+const signValue = (value) => {
+  let key = getKey();
+  let signedVal = signatureUtils.rsaHashAndSign(value,config.hashAlgorithm,key.private);
+  let result = new signatureResponse(signedVal, key.id, config.version);
+  return result;
+};
+
+const signEntity = (entity) => {
+  return signValue(JSON.stringify(entity).trim())
+}
+
+const signMultipleValues = (value) => {
+  return R.map(signValue, value);
+};
+
+const signMultipleEntities = (value) => {
+  return R.map(signEntity, value);
+};
+
+const verifyValue = (obj) => {
+  let keyId = obj['keyId']
+  let signatureValue = obj['signatureValue']
+  let claim = obj['claim']
+  if (typeof(claim) === 'object') {
+    claim = JSON.stringify(claim)
+  }
+  
+  let key = getKeyById(keyId);
+  return signatureUtils.rsaHashAndVerify(signatureValue, new buffer(claim.trim()).toString("base64"), config.hashAlgorithm, key.public);
+};
+
+const verifyMultipleValues = (values) => {
+  return R.map(verifyValue, values);
+}
+
+const verifyEntity = (entity) => {
+  return verifyValue(entity)
+}
+
+const verifyMultipleEntities = (values) => {
+  return R.map(verifyEntity, values);
+}
+
+
 loadKeys = async(() => {
   let password = await(getPassword());
   let keys = await(loadKeysFromDB());
+
   keys = R.map(key=>key.dataValues,keys);
   let masterKey = getMasterKey(password,keys);
   keyPairs = decryptKeys(masterKey,keys);
