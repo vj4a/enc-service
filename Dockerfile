@@ -15,4 +15,4 @@ USER opensaber
 # LABEL commitHash
 EXPOSE 8013
 # !!! password from file have to be replaced, and use env var
-CMD ["/bin/sh", "-c", "node app.js < ${PASSWORD}"]
+CMD ["/bin/sh", "-c", "node app.js < pass_file"]
