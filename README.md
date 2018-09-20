@@ -61,6 +61,9 @@ The type would have to be supplied as "type enum('MASTER', 'OTHER')" in Mysql.
 
  This will start the encryption service in the background on port 8013 by reading the master password from `passwd` file.
 
+#### Run the service without passwd file
+Export an environment variable `ENTRY_PASS` holding the master password and start the service as given below
+    node app.js &
 
 ## APIs
 ### Encrypt

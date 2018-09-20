@@ -68,7 +68,6 @@ initRoutes = () => {
     return res.send(decryptObj(req.body.value));
   });
 
-
   // Signature, Verification
   app.post("/sign", (req, res) => {
     if (Array.isArray(req.body.value)) {
@@ -218,14 +217,8 @@ loadKeysFromDB = () => {
 };
 
 getMasterPassword = (resolve,reject) => {
-  prompt.start()
-  prompt.get(schema, function(err, result) {
-    if (err) {
-      return reject(err);
-    }
-    password = result.password;
-    resolve(password);
-  });
+  password = process.env.ENTRY_PASS;
+  resolve(password);
 };
 
 getPassword = () => {
