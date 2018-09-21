@@ -63,7 +63,7 @@ The type would have to be supplied as "type enum('MASTER', 'OTHER')" in Mysql.
 
 #### Run the service without passwd file
 Export an environment variable `ENTRY_PASS` holding the master password and start the service as given below
-    node app.js &
+    `node app.js &`
 
 ## APIs
 ### Encrypt
