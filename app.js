@@ -149,13 +149,25 @@ const signValue = (value) => {
   return result;
 };
 
-const signEntity = (entity) => {
-  return signValue(JSON.stringify(entity).trim())
-}
-
 const signMultipleValues = (value) => {
   return R.map(signValue, value);
 };
+
+const getSortedJson = (jsonObjToSort) => {
+  var sorted = {}
+  Object.keys(jsonObjToSort).sort().forEach(function(key) {
+    sorted[key] = jsonObjToSort[key];
+    if (typeof(sorted[key]) === "object") {
+      sorted[key] = getSortedJson(sorted[key])
+    }
+  })
+  return sorted;
+}
+
+const signEntity = (entity) => {
+  var ordered = getSortedJson(entity);
+  return signValue(JSON.stringify(ordered).trim())
+}
 
 const signMultipleEntities = (value) => {
   return R.map(signEntity, value);
@@ -178,7 +190,8 @@ const verifyMultipleValues = (values) => {
 }
 
 const verifyEntity = (entity) => {
-  return verifyValue(entity)
+  var ordered = getSortedJson(entity);
+  return verifyValue(ordered)
 }
 
 const verifyMultipleEntities = (values) => {
