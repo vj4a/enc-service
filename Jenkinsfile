@@ -29,7 +29,7 @@ node('build-slave') {
            echo 'Push to Repo'
            dir('.') {
                sh 'ARTIFACT_LABEL=bronze ./dockerPushToRepo.sh'
-               sh "./src/app/metadata.sh ${GIT_COMMIT_HASH} > metadata.json"
+               sh "./metadata.sh ${GIT_COMMIT_HASH} > metadata.json"
                sh "cat metadata.json"
                archive includes: "metadata.json"
            }
