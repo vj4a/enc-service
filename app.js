@@ -153,12 +153,36 @@ const signMultipleValues = (value) => {
   return R.map(signValue, value);
 };
 
+/**
+ * At the time of signing or verifying, the payloads could be ordered different
+ * The hash of the message is generated based on the order in they which appear
+ * and so lets order it alphabetically.
+ * This function sorts keys and values and does it recursively.
+ * @param {*} jsonObjToSort 
+ */
 const getSortedJson = (jsonObjToSort) => {
   var sorted = {}
   Object.keys(jsonObjToSort).sort().forEach(function(key) {
-    sorted[key] = jsonObjToSort[key];
-    if (typeof(sorted[key]) === "object") {
+    if (Array.isArray(sorted[key])) {
+      var typeName = typeof(sorted[key][0])
+      if (typeName === "object") {
+        // The first element within the array is a Json object. Sort that
+        sorted[key] = getSortedJson(sorted[key][0])
+      } else {
+        // The array contains simple values, sort it ascending
+        var arr
+        if (typeName === "number") {
+          // This is required, otherwise 20 will appear before 3.
+          arr = sorted[key].sort(function(a, b){return a-b});
+        } else {
+          arr = sorted[key].sort();
+        }
+        sorted[key] = arr.slice()
+      }
+    } else if (typeof(sorted[key]) === "object") {
       sorted[key] = getSortedJson(sorted[key])
+    } else {
+      sorted[key] = jsonObjToSort[key];
     }
   })
   return sorted;
