@@ -154,6 +154,26 @@ const signMultipleValues = (value) => {
 };
 
 /**
+ * Sort json objects without knowing the particular unique or distinguishing
+ * attribute based on which you can sort. This computes a hash of the entire
+ * string and uses that.
+ * @param {*} arr 
+ */
+const sortArrayObjects = (arr) => {
+  var hashArr = {}
+  for (let itr = 0; itr < arr.length; itr++) {
+    var res = getSortedJson(arr[itr])
+    hashArr[new buffer(JSON.stringify(res).trim()).toString("base64")] = res
+  }
+
+  var res = []
+  Object.keys(hashArr).sort().forEach(function(key,idx) {
+    res[idx] = hashArr[key]
+  })
+  return res
+}
+
+/**
  * At the time of signing or verifying, the payloads could be ordered different
  * The hash of the message is generated based on the order in they which appear
  * and so lets order it alphabetically.
@@ -163,24 +183,25 @@ const signMultipleValues = (value) => {
 const getSortedJson = (jsonObjToSort) => {
   var sorted = {}
   Object.keys(jsonObjToSort).sort().forEach(function(key) {
-    if (Array.isArray(sorted[key])) {
-      var typeName = typeof(sorted[key][0])
+    
+    if (Array.isArray(jsonObjToSort[key])) {
+      var typeName = typeof(jsonObjToSort[key][0])
       if (typeName === "object") {
         // The first element within the array is a Json object. Sort that
-        sorted[key] = getSortedJson(sorted[key][0])
+        sorted[key] = sortArrayObjects(jsonObjToSort[key]).slice()
       } else {
         // The array contains simple values, sort it ascending
         var arr
         if (typeName === "number") {
           // This is required, otherwise 20 will appear before 3.
-          arr = sorted[key].sort(function(a, b){return a-b});
+          arr = jsonObjToSort[key].sort(function(a, b){return a-b});
         } else {
-          arr = sorted[key].sort();
+          arr = jsonObjToSort[key].sort();
         }
         sorted[key] = arr.slice()
       }
-    } else if (typeof(sorted[key]) === "object") {
-      sorted[key] = getSortedJson(sorted[key])
+    } else if (typeof(jsonObjToSort[key]) === "object") {
+      sorted[key] = getSortedJson(jsonObjToSort[key])
     } else {
       sorted[key] = jsonObjToSort[key];
     }
