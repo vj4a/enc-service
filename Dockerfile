@@ -1,4 +1,4 @@
-FROM node:8.12.0-slim
+FROM node:6.14.4-slim
 MAINTAINER "Rajesh R <rajesh.r@optit.co>"
 
 RUN adduser -h /home/opensaber opensaber -D 
