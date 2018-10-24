@@ -8,6 +8,7 @@ RUN apt update && \
     apt install -y zip python make g++; \
     npm i ;\
     apt remove --purge -y python make g++; \
+    apt-get autoremove -y; \
     rm -rf /var/lib/apt/lists/*
 RUN chown -R opensaber:opensaber /home/opensaber
 USER opensaber
