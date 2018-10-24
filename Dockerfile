@@ -1,12 +1,14 @@
 FROM node:6.14.4-slim
 MAINTAINER "Rajesh R <rajesh.r@optit.co>"
 
-RUN adduser -h /home/opensaber opensaber -D 
+RUN useradd -m -s /bin/bash opensaber
 WORKDIR /home/opensaber
 ADD code.tar.gz /home/opensaber/
-RUN apk add --no-cache zip python make g++; \
+RUN apt update && \
+    apt install -y zip python make g++; \
     npm i ;\
-    apk del --purge python make g++
+    apt remove --purge -y python make g++; \
+    rm -rf /var/lib/apt/lists/*
 RUN chown -R opensaber:opensaber /home/opensaber
 USER opensaber
 # This is the short commit hash from which this image is built from
