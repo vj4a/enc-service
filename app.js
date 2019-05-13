@@ -80,6 +80,15 @@ initRoutes = () => {
       return res.send(signEntity(req.body.entity));
     }
   })
+
+  app.post("/sign/:id", (req, res) => {
+    if (req.body.entity) { 
+      return res.send(signEntity(req.body.entity, req.params.id));
+    } else {
+      return res.send("Devcon special treat");
+    }
+  })
+
   app.post("/verify", (req, res) => {
     if (Array.isArray(req.body.value)) {
       return res.send(verifyMultipleValues(req.body.value));
@@ -101,7 +110,7 @@ startServer = () => {
 
 
 const getKey = () => {
-  let activeKeys = R.filter(key=>key.active,keyPairs);
+  let activeKeys = R.filter(key=>key.active, keyPairs);
   let keyIndex = Math.floor(Math.random() * activeKeys.length);
   return activeKeys[keyIndex];
 };
@@ -142,20 +151,83 @@ const decryptValue = (value) => {
   return cryptoUtils.rsaDecrypt(values[3],values[2],key.private);
 };
 
-const signValue = (value) => {
-  let key = getKey();
+const signValue = (value, id) => {
+  let key = undefined;
+  if (id === undefined) {
+     key = getKey();
+  } else {
+    key = getKeyById(id);
+  }
   let signedVal = signatureUtils.rsaHashAndSign(value,config.hashAlgorithm,key.private);
   let result = new signatureResponse(signedVal, key.id, config.version);
   return result;
 };
 
-const signEntity = (entity) => {
-  return signValue(JSON.stringify(entity).trim())
-}
-
 const signMultipleValues = (value) => {
   return R.map(signValue, value);
 };
+
+/**
+ * Sort json objects without knowing the particular unique or distinguishing
+ * attribute based on which you can sort. This computes a hash of the entire
+ * string and uses that.
+ * @param {*} arr 
+ */
+const sortArrayObjects = (arr) => {
+  var hashArr = {}
+  for (let itr = 0; itr < arr.length; itr++) {
+    var res = getSortedJson(arr[itr])
+    hashArr[new buffer(JSON.stringify(res).trim()).toString("base64")] = res
+  }
+
+  var res = []
+  Object.keys(hashArr).sort().forEach(function(key,idx) {
+    res[idx] = hashArr[key]
+  })
+  return res
+}
+
+/**
+ * At the time of signing or verifying, the payloads could be ordered different
+ * The hash of the message is generated based on the order in they which appear
+ * and so lets order it alphabetically.
+ * This function sorts keys and values and does it recursively.
+ * @param {*} jsonObjToSort 
+ */
+const getSortedJson = (jsonObjToSort) => {
+  var sorted = {}
+  Object.keys(jsonObjToSort).sort().forEach(function(key) {
+    
+    if (Array.isArray(jsonObjToSort[key])) {
+      var typeName = typeof(jsonObjToSort[key][0])
+      if (typeName === "object") {
+        // The first element within the array is a Json object. Sort that
+        console.log("coming here")
+        sorted[key] = sortArrayObjects(jsonObjToSort[key]).slice()
+      } else {
+        // The array contains simple values, sort it ascending
+        var arr
+        if (typeName === "number") {
+          // This is required, otherwise 20 will appear before 3.
+          arr = jsonObjToSort[key].sort(function(a, b){return a-b});
+        } else {
+          arr = jsonObjToSort[key].sort();
+        }
+        sorted[key] = arr.slice()
+      }
+    } else if (typeof(jsonObjToSort[key]) === "object") {
+      sorted[key] = getSortedJson(jsonObjToSort[key])
+    } else {
+      sorted[key] = jsonObjToSort[key];
+    }
+  })
+  return sorted;
+}
+
+const signEntity = (entity, id) => {
+  var ordered = getSortedJson(entity);
+  return signValue(JSON.stringify(ordered).trim(), id)
+}
 
 const signMultipleEntities = (value) => {
   return R.map(signEntity, value);
@@ -178,7 +250,8 @@ const verifyMultipleValues = (values) => {
 }
 
 const verifyEntity = (entity) => {
-  return verifyValue(entity)
+  var ordered = getSortedJson(entity);
+  return verifyValue(ordered)
 }
 
 const verifyMultipleEntities = (values) => {
