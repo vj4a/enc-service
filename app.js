@@ -228,7 +228,6 @@ const getSortedJson = (jsonObjToSort) => {
       var typeName = typeof(jsonObjToSort[key][0])
       if (typeName === "object") {
         // The first element within the array is a Json object. Sort that
-        console.log("coming here")
         sorted[key] = sortArrayObjects(jsonObjToSort[key]).slice()
       } else {
         // The array contains simple values, sort it ascending
@@ -251,6 +250,7 @@ const getSortedJson = (jsonObjToSort) => {
 }
 
 const signEntity = (entity, id) => {
+  
   var ordered = getSortedJson(entity);
   return signValue(JSON.stringify(ordered).trim(), id)
 }
