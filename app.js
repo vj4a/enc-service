@@ -54,6 +54,11 @@ initRoutes = () => {
     return res.send(getPublicKey(req.params.id));
   });
   
+  // Get public key specified by id
+  app.get("/keys/pair/:id", (req, res) => {
+    return res.send(getKeyPair(req.params.id));
+  });
+  
   // Encryption, Decryption
   app.post("/encrypt", (req, res) => {
     return res.send(encryptValue(req.body.value));
@@ -108,28 +113,49 @@ startServer = () => {
   })
 };
 
-
+/**
+ * Returns a random active non-reserved key
+ */
 const getKey = () => {
-  let activeKeys = R.filter(key=>key.active, keyPairs);
+  let activeKeys = R.filter(key=>(key.active & !key.reserved), keyPairs);
   let keyIndex = Math.floor(Math.random() * activeKeys.length);
   return activeKeys[keyIndex];
 };
 
 const getKeyById = (keyId) => {
-  return R.filter(key=>key.id==keyId,keyPairs)[0];
+  return R.filter(key=>(key.id==keyId),keyPairs)[0];
 };
 
 /** 
- * Returns only active public keys 
- * @param {number} keyId 
+ * Returns a public key
+ * @param {number} keyI`d 
  * */
 const getPublicKey = (keyId) => {
   let key = getKeyById(keyId);
   let publicKey = "";
-  if (key && key.active) {
+  if (key) {
     publicKey = '-----BEGIN PUBLIC KEY-----\n' + key.public + '\n' + '-----END PUBLIC KEY-----';
   }
   return publicKey;
+}
+
+/** 
+ * Returns only active public keys 
+ * @param {number} keyI`d 
+ * */
+const getKeyPair = (keyId) => {
+  let key = getKeyById(keyId);
+  let keypair = {}
+  let publicKey = ""
+  let privateKey = ""
+  if (key && key.active && key.reserved) {
+    publicKey = '-----BEGIN PUBLIC KEY-----\n' + key.public + '\n' + '-----END PUBLIC KEY-----';
+    privateKey = key.private
+  }
+
+  keypair.public = publicKey
+  keypair.private = privateKey
+  return keypair;
 }
 
 const encryptObj = (obj) => {
