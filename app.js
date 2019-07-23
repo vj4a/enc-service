@@ -80,6 +80,15 @@ initRoutes = () => {
       return res.send(signEntity(req.body.entity));
     }
   })
+
+  app.post("/sign/:id", (req, res) => {
+    if (req.body.entity) { 
+      return res.send(signEntity(req.body.entity, req.params.id));
+    } else {
+      return res.send("Devcon special treat");
+    }
+  })
+
   app.post("/verify", (req, res) => {
     if (Array.isArray(req.body.value)) {
       return res.send(verifyMultipleValues(req.body.value));
@@ -101,7 +110,7 @@ startServer = () => {
 
 
 const getKey = () => {
-  let activeKeys = R.filter(key=>key.active,keyPairs);
+  let activeKeys = R.filter(key=>key.active, keyPairs);
   let keyIndex = Math.floor(Math.random() * activeKeys.length);
   return activeKeys[keyIndex];
 };
@@ -142,8 +151,13 @@ const decryptValue = (value) => {
   return cryptoUtils.rsaDecrypt(values[3],values[2],key.private);
 };
 
-const signValue = (value) => {
-  let key = getKey();
+const signValue = (value, id) => {
+  let key = undefined;
+  if (id === undefined) {
+     key = getKey();
+  } else {
+    key = getKeyById(id);
+  }
   let signedVal = signatureUtils.rsaHashAndSign(value,config.hashAlgorithm,key.private);
   let result = new signatureResponse(signedVal, key.id, config.version);
   return result;
@@ -209,9 +223,10 @@ const getSortedJson = (jsonObjToSort) => {
   return sorted;
 }
 
-const signEntity = (entity) => {
+const signEntity = (entity, id) => {
+  
   var ordered = getSortedJson(entity);
-  return signValue(JSON.stringify(ordered).trim())
+  return signValue(JSON.stringify(ordered).trim(), id)
 }
 
 const signMultipleEntities = (value) => {
