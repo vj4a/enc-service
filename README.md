@@ -29,6 +29,7 @@ Not required in Mysql
         private text NOT NULL,
         type "enum_Keys_type" NOT NULL,
         active boolean DEFAULT true NOT NULL,
+        reserved boolean DEFAULT false NOT NULL,
         "createdAt" timestamp with time zone NOT NULL,
         "updatedAt" timestamp with time zone NOT NULL
       );`
@@ -42,12 +43,18 @@ The type would have to be supplied as "type enum('MASTER', 'OTHER')" in Mysql.
     1. DB_PASSWORD
     1. DB_NAME
     1. DB_DIALECT - "postgres"|"mysql"|"sqlite"
-1. Set the environment by exporting the `NODE_ENV` environment variable as `development` or `prod`
-    1. DB_PORT defaults to 9999 in prod. If the DB server is listening on a different port, DB_PORT must be set.
-1. Run the key generation script
+    1. MASTER_PASS
+    1. N_KEYS
+    1. N_RESERVED_KEYS
 
-      `node scripts/master.js`
- * This will ask you for encryption password twice and then add the following
+2. Set the environment by exporting the `NODE_ENV` environment variable as `development` or `prod`
+    1. DB_PORT defaults to 9999 in prod. If the DB server is listening on a different port, DB_PORT must be set.
+3. Run the key generation script in dev mode
+      `node scripts/master.js` <br>
+   Run the key generation script in silent mode
+      `node scripts/master.js --silent`  
+ The following is applicable only for dev mode
+ * This will ask for encryption password twice and then add the following
      * Encrypted RSA keys to the DB
  * The encryption password will be asked twice again -- same as above
      * Encrypted RSA keys in a file(./keys/keys.json)
@@ -56,7 +63,13 @@ The type would have to be supplied as "type enum('MASTER', 'OTHER')" in Mysql.
 
 
 ### Running the service
-
+1. Set the DB credentials by exporting the following environment variables
+    1. DB_HOST
+    2. DB_USER
+    3. DB_PASSWORD
+    4. DB_NAME
+    5. DB_DIALECT - "postgres"|"mysql"|"sqlite"
+2. Run 
     node app.js < passwd &
 
  This will start the encryption service in the background on port 8013 by reading the master password from `passwd` file.

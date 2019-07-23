@@ -54,6 +54,11 @@ initRoutes = () => {
     return res.send(getPublicKey(req.params.id));
   });
   
+  // Get public key specified by id
+  app.get("/keys/pair/:id", (req, res) => {
+    return res.send(getKeyPair(req.params.id));
+  });
+  
   // Encryption, Decryption
   app.post("/encrypt", (req, res) => {
     return res.send(encryptValue(req.body.value));
@@ -80,6 +85,15 @@ initRoutes = () => {
       return res.send(signEntity(req.body.entity));
     }
   })
+
+  app.post("/sign/:id", (req, res) => {
+    if (req.body.entity) { 
+      return res.send(signEntity(req.body.entity, req.params.id));
+    } else {
+      return res.send("Devcon special treat");
+    }
+  })
+
   app.post("/verify", (req, res) => {
     if (Array.isArray(req.body.value)) {
       return res.send(verifyMultipleValues(req.body.value));
@@ -99,28 +113,49 @@ startServer = () => {
   })
 };
 
-
+/**
+ * Returns a random active non-reserved key
+ */
 const getKey = () => {
-  let activeKeys = R.filter(key=>key.active,keyPairs);
+  let activeKeys = R.filter(key=>(key.active & !key.reserved), keyPairs);
   let keyIndex = Math.floor(Math.random() * activeKeys.length);
   return activeKeys[keyIndex];
 };
 
 const getKeyById = (keyId) => {
-  return R.filter(key=>key.id==keyId,keyPairs)[0];
+  return R.filter(key=>(key.id==keyId),keyPairs)[0];
 };
 
 /** 
- * Returns only active public keys 
- * @param {number} keyId 
+ * Returns a public key
+ * @param {number} keyI`d 
  * */
 const getPublicKey = (keyId) => {
   let key = getKeyById(keyId);
   let publicKey = "";
-  if (key && key.active) {
+  if (key) {
     publicKey = '-----BEGIN PUBLIC KEY-----\n' + key.public + '\n' + '-----END PUBLIC KEY-----';
   }
   return publicKey;
+}
+
+/** 
+ * Returns only active public keys 
+ * @param {number} keyI`d 
+ * */
+const getKeyPair = (keyId) => {
+  let key = getKeyById(keyId);
+  let keypair = {}
+  let publicKey = ""
+  let privateKey = ""
+  if (key && key.active && key.reserved) {
+    publicKey = '-----BEGIN PUBLIC KEY-----\n' + key.public + '\n' + '-----END PUBLIC KEY-----';
+    privateKey = key.private
+  }
+
+  keypair.public = publicKey
+  keypair.private = privateKey
+  return keypair;
 }
 
 const encryptObj = (obj) => {
@@ -142,8 +177,13 @@ const decryptValue = (value) => {
   return cryptoUtils.rsaDecrypt(values[3],values[2],key.private);
 };
 
-const signValue = (value) => {
-  let key = getKey();
+const signValue = (value, id) => {
+  let key = undefined;
+  if (id === undefined) {
+     key = getKey();
+  } else {
+    key = getKeyById(id);
+  }
   let signedVal = signatureUtils.rsaHashAndSign(value,config.hashAlgorithm,key.private);
   let result = new signatureResponse(signedVal, key.id, config.version);
   return result;
@@ -209,9 +249,10 @@ const getSortedJson = (jsonObjToSort) => {
   return sorted;
 }
 
-const signEntity = (entity) => {
+const signEntity = (entity, id) => {
+  
   var ordered = getSortedJson(entity);
-  return signValue(JSON.stringify(ordered).trim())
+  return signValue(JSON.stringify(ordered).trim(), id)
 }
 
 const signMultipleEntities = (value) => {

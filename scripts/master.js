@@ -10,20 +10,20 @@ var schema = {
   properties: {
     password: {
       description: 'Enter master password',
-      hidden:true,
+      hidden: true,
       replace: '*',
       required: true,
       type: 'string',
     },
     repassword: {
       description: 'Re-Enter master password',
-      hidden:true,
+      hidden: true,
       replace: '*',
       required: true,
       type: 'string',
-      conform: function(repassword) {
-      var password = prompt.history('password').value;
-      return (password == repassword);
+      conform: function (repassword) {
+        var password = prompt.history('password').value;
+        return (password == repassword);
       }
     },
     numKeys: {
@@ -31,64 +31,91 @@ var schema = {
       required: true,
       type: 'number'
     },
+    numReservedKeys: {
+      description: 'Number of reserved keys to set',
+      required: true,
+      type: 'number'
+    }
   }
 }
 
 
-function getPassword() {
+function getPasswordFromUser() {
   prompt.start()
-  prompt.get(schema, function(err, result) {
+  prompt.get(schema, function (err, result) {
     if (err) {
-      return console.log(err); } 
+      return console.log(err);
+    }
     password = result.password;
-    var keys = getKeys(password,result.numKeys)
-    if(writeToFile("./keys/keys.json", keys)){
+    var keys = getKeys(password, result.numKeys, result.numReservedKeys)
+    if (writeToFile("./keys/keys.json", keys)) {
       console.log("Keys created...")
     }
     models.Keys.bulkCreate(keys)
-    .then(sc=>{
-      console.log("Keys successfully written to DB");
-      delete schema.properties.numKeys;
-      prompt.get(schema, function(err, result) {
-        if (err) {
-          return console.log(err); } 
+      .then(sc => {
+        console.log("Keys successfully written to DB");
+        delete schema.properties.numKeys;
+        prompt.get(schema, function (err, result) {
+          if (err) {
+            return console.log(err);
+          }
           password = result.password;
-          if(verifyEncryption(keys, password)){
+          if (verifyEncryption(keys, password)) {
             console.log("Verification successful...")
           }
-      });
-    })
-    .catch(err=>{
-      console.log("Error adding keys to db",err);
-    })
+        });
+      })
+      .catch(err => {
+        console.log("Error adding keys to db", err);
+      })
   });
- 
 }
 
+function getPassword() {
+  password = process.env.MASTER_PASS;
+  if (password === '' || !password) {
+    console.log("No password provided. Quitting...");
+  }
+  var keys = getKeys(password, process.env.N_KEYS, process.env.N_RESERVED_KEYS)
+  
+  models.Keys.bulkCreate(keys)
+    .then(sc => {
+      console.log("Keys successfully written to DB");
+      delete schema.properties.numKeys;
+      if (verifyEncryption(keys, password)) {
+          console.log("Verification successful...")
+        }
+      })
+    .catch(err => {
+      console.log("Error adding keys to db", err);
+  })
+}
+
+
 const writeToFile = (fileName, keys) => {
-  fs.writeFile(fileName, JSON.stringify(keys), function(err) {
-    if(err) {
-        return console.log(err);
+  fs.writeFile(fileName, JSON.stringify(keys), function (err) {
+    if (err) {
+      return console.log(err);
     }
   });
   return true;
 }
 
 const createZip = (inputFile) => {
-  var createKeyZip = child_process.spawn('zip', ['--encrypt','./keys/keys.zip', inputFile]);
+  var createKeyZip = child_process.spawn('zip', ['--encrypt', './keys/keys.zip', inputFile]);
   createKeyZip.stdout.on('data', function (data) {
-      // console.log('stdout: ' + data);
-   });
+    // console.log('stdout: ' + data);
+  });
   createKeyZip.stderr.on('data', function (data) {
-    if(data.includes('Enter')){
+    if (data.includes('Enter')) {
       console.log("Enter password for zip: ")
-    } else if(data.includes('Verify')){
+    } else if (data.includes('Verify')) {
       console.log("Verify password for zip: ")
     }
   });
 
   createKeyZip.on('close', function (code) {
-    var destroyKeyjson = child_process.spawn('rm', ['-rf','decryptedKeys.json']);
+    var destroyKeyjson = child_process.spawn('rm', ['-rf', 'decryptedKeys.json']);
     console.log("keys.json and keys.zip has been saved in ./keys directory")
     console.log("REMEMBER MASTER AND ZIP PASSWORD")
     console.log('Warning: Nothing will work without master password');
@@ -98,44 +125,49 @@ const createZip = (inputFile) => {
 const verifyEncryption = (keys, password) => {
   let decryptedKeys = []
   let masterKey = getMasterKey(keys)
-  if(masterKey!=null){
+  if (masterKey != null) {
     decryptedKeys.push(masterKey)
-    for(var i=0; i<keys.length; i++){
-      if(keys[i]["type"] == "OTHER"){
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i]["type"] == "OTHER") {
         let key = {}
         key.public = keys[i]["public"]
         key.private = rsaDecryption(keys[i]["private"], masterKey.private)
-        key.type = "OTHER"
-        key.active = true
+        key.type = keys[i]["type"]
+        key.active = keys[i]["active"]
+        key.reserved = keys[i]["reserved"]
         decryptedKeys.push(key)
       }
     }
-    if(writeToFile("decryptedKeys.json", decryptedKeys)){
-      createZip("decryptedKeys.json")
-      return true
+    if (process.argv.length == 2) {
+      if (writeToFile("decryptedKeys.json", decryptedKeys)) {
+        createZip("decryptedKeys.json")
+        return true
+      }
     }
   }
   return false
 }
 
 const getMasterKey = (keys) => {
-  for(var i=0; i<keys.length; i++){
-    if(keys[i]["type"] == "MASTER"){
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i]["type"] == "MASTER") {
       let key = {}
       key.public = keys[i]["public"]
       key.private = decMasterKey(keys[i]["private"], password)
       key.type = "MASTER"
       key.active = true
-      if(key.private == null) {return null}
+      if (key.private == null) { return null }
       return key
     }
   }
 }
 
-const getKeys = (password,numKeys) => {
+const getKeys = (password, numKeys, numReservedKeys) => {
   let master = generateKey(password);
   let keys = [];
   keys.push(master);
+
+  let reservedCount = 0;
   for (var i = 0; i < numKeys; i++) {
     var keypair = ursa.generatePrivateKey(512);
     let key = {};
@@ -143,6 +175,9 @@ const getKeys = (password,numKeys) => {
     key.private = rsaEncryption(convertPemToString(keypair.toPrivatePem().toString()), master.public);
     key.type = "OTHER";
     key.active = true;
+    key.reserved = (reservedCount < numReservedKeys);
+    reservedCount++
+
     keys.push(key);
   }
   return keys;
@@ -170,7 +205,7 @@ const rsaEncryption = (message, publicKey) => {
   return crt.encrypt(message, 'utf8', 'base64', ursa.RSA_PKCS1_PADDING)
 }
 
-const rsaDecryption = (message,privateKey) => {
+const rsaDecryption = (message, privateKey) => {
   var crt = ursa.createPrivateKey('-----BEGIN RSA PRIVATE KEY-----\n' + privateKey + '\n' + '-----END RSA PRIVATE KEY-----')
   return crt.decrypt(message, 'base64', 'utf8', ursa.RSA_PKCS1_PADDING);
 };
@@ -185,15 +220,22 @@ const convertPemToString = (pemKey) => {
 }
 
 const decMasterKey = (key, password) => {
-  try{
+  try {
     var decipher = crypto.createDecipher("aes-128-cbc", password)
     var decrypted = decipher.update(key, 'hex', 'utf8')
     decrypted += decipher.final('utf8');
-    return decrypted;  
-  } catch(err){
+    return decrypted;
+  } catch (err) {
     console.log("Could not decrypt master key, Verification unsuccessful")
     return null;
   }
 }
 
-getPassword()
+if (process.argv.length == 2) {
+  console.log("Running in dev mode.")
+  getPasswordFromUser()
+} else {
+  console.log("Running in silent mode. Looking for master env vars..")
+  getPassword()
+}
+
