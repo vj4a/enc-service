@@ -9,5 +9,4 @@ RUN apt update \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 EXPOSE 8013
-CMD ls
 CMD sh entrypoint.sh
