@@ -54,11 +54,6 @@ initRoutes = () => {
     return res.send(getPublicKey(req.params.id));
   });
   
-  // Get public key specified by id
-  app.get("/keys/pair/:id", (req, res) => {
-    return res.send(getKeyPair(req.params.id));
-  });
-  
   // Encryption, Decryption
   app.post("/encrypt", (req, res) => {
     return res.send(encryptValue(req.body.value));
@@ -89,9 +84,7 @@ initRoutes = () => {
   app.post("/sign/:id", (req, res) => {
     if (req.body.entity) { 
       return res.send(signEntity(req.body.entity, req.params.id));
-    } else {
-      return res.send("Devcon special treat");
-    }
+    } 
   })
 
   app.post("/verify", (req, res) => {
@@ -137,25 +130,6 @@ const getPublicKey = (keyId) => {
     publicKey = '-----BEGIN PUBLIC KEY-----\n' + key.public + '\n' + '-----END PUBLIC KEY-----';
   }
   return publicKey;
-}
-
-/** 
- * Returns only active public keys 
- * @param {number} keyI`d 
- * */
-const getKeyPair = (keyId) => {
-  let key = getKeyById(keyId);
-  let keypair = {}
-  let publicKey = ""
-  let privateKey = ""
-  if (key && key.active && key.reserved) {
-    publicKey = '-----BEGIN PUBLIC KEY-----\n' + key.public + '\n' + '-----END PUBLIC KEY-----';
-    privateKey = key.private
-  }
-
-  keypair.public = publicKey
-  keypair.private = privateKey
-  return keypair;
 }
 
 const encryptObj = (obj) => {
@@ -302,10 +276,13 @@ getMasterKey = (password,keys) => {
 const decryptKeys = (masterKey,keys) => {
   keys = R.map(key=>{
     if(key.type=="OTHER") {
-      key.private = cryptoUtils.rsaDecrypt(key.private,config.scheme,masterKey);
+      key.private = cryptoUtils.rsaChunkedDecrypt(key.private,config.scheme,masterKey);
     }
     return key;
   },keys);
+
+  console.log("Total keys found = " + keys.length);
+
   return R.filter(key=>{
     return key.type!="MASTER"
   },keys);
