@@ -192,19 +192,14 @@ const chunkifyPemString = (pemKey) => {
 // Dechunk
 const rsaDecryptChunks = (chunkedStr, key) => {
   var arrChunks = chunkedStr.split("|")
-  console.log("nu of chunks = " + arrChunks.length)
-
+  
   let result = ""
   for (idx = 0; idx < arrChunks.length; idx++) {
-    //console.log("Working on " + arrChunks[idx])
-    result += rsaDecryption(arrChunks[idx], key) 
-    // console.log(idx + " done decryption")
+    result += rsaDecryption(arrChunks[idx], key)
   }
 
-  //console.log("result after dechunk = " + result)
   return result
 }
-
 
 const getKeys = (password, numKeys, numReservedKeys) => {
   let master = generateKey(password);
