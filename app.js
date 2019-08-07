@@ -49,6 +49,14 @@ initRoutes = () => {
     return res.send("UP");
   });
 
+  app.get("/health", (req, res) => {   
+    return res.send("UP");
+  });
+
+  app.get("/service/health", (req, res) => {   
+    return res.send("UP");
+  });
+
   // Get public key specified by id
   app.get("/keys/:id", (req, res) => {
     return res.send(getPublicKey(req.params.id));
