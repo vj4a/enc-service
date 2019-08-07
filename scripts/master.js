@@ -2,9 +2,12 @@ const crypto = require('crypto')
 const ursa = require('ursa')
 const prompt = require('prompt')
 const R = require("ramda");
+const await = require("asyncawait/await");
+const async = require("asyncawait/async");
 const models = require("../models");
 var fs = require('fs');
 const child_process = require('child_process');
+let existingKeys = [];
 
 var schema = {
   properties: {
@@ -40,14 +43,14 @@ var schema = {
 }
 
 
-function getPasswordFromUser() {
+function bulkCreateKeysUser() {
   prompt.start()
   prompt.get(schema, function (err, result) {
     if (err) {
       return console.log(err);
     }
     password = result.password;
-    var keys = getKeys(password, result.numKeys, result.numReservedKeys)
+    var keys = getKeys(password, result.numKeys, result.numReservedKeys, true)
     if (writeToFile("./keys/keys.json", keys)) {
       console.log("Keys created...")
     }
@@ -71,25 +74,47 @@ function getPasswordFromUser() {
   });
 }
 
-function getPassword() {
-  password = process.env.MASTER_PASS;
+function bulkAppendKeys(master) {
+  password = process.env.ENTRY_PASS;
   if (password === '' || !password) {
     console.log("No password provided. Quitting...");
   }
-  var keys = getKeys(password, process.env.N_KEYS, process.env.N_RESERVED_KEYS)
-  
-  models.Keys.bulkCreate(keys)
-    .then(sc => {
+  var keys = getKeys(password, process.env.N_KEYS, process.env.N_RESERVED_KEYS, true, master);
+
+  models.Keys.bulkCreate(keys).then(sc => {
       console.log("Keys successfully written to DB");
       delete schema.properties.numKeys;
-      if (verifyEncryption(keys, password)) {
+      // Add the new keys to existing keys
+      keys.concat(existingKeys);
+
+      if (verifyEncryption(keys, password, master)) {
         console.log("Verification successful...")
       } else {
-        console.log("Error verification of keys")
+        console.log("Bulk append - Error verification of keys")
       }
-      })
-    .catch(err => {
-      console.log("Error adding keys to db", err);
+    })
+  .catch(err => {
+    console.log("Error adding keys to db", err);
+  })
+}
+
+function bulkCreateKeys() {
+  password = process.env.ENTRY_PASS;
+  if (password === '' || !password) {
+    console.log("No password provided. Quitting...");
+  }
+  var keys = getKeys(password, process.env.N_KEYS, process.env.N_RESERVED_KEYS, false);
+  models.Keys.bulkCreate(keys).then(sc => {
+    console.log("Keys successfully written to DB");
+    delete schema.properties.numKeys;
+    if (verifyEncryption(keys, password)) {
+      console.log("Verification successful...")
+    } else {
+      console.log("Bulk create - Error verification of keys")
+    }
+    })
+  .catch(err => {
+    console.log("Error adding keys to db", err);
   })
 }
 
@@ -124,11 +149,16 @@ const createZip = (inputFile) => {
   });
 }
 
-const verifyEncryption = (keys, password) => {
+const verifyEncryption = (keys, password, master) => {
   var result = false;
   let decryptedKeys = []
-  let masterKey = getMasterKey(keys)
-  if (masterKey != null) {
+  let masterKey = ""
+  if (master) {
+    masterKey = master
+  } else {
+    masterKey = getMasterKey(keys)
+  }
+  if (masterKey != null) {    
     decryptedKeys.push(masterKey)
     for (var i = 0; i < keys.length; i++) {
       if (keys[i]["type"] == "OTHER") {
@@ -145,6 +175,8 @@ const verifyEncryption = (keys, password) => {
       createZip("decryptedKeys.json")
     }
     result = true
+  } else {
+    console.log("master key is null")
   }
   return result
 }
@@ -158,6 +190,7 @@ const getMasterKey = (keys) => {
       key.type = "MASTER"
       key.active = true
       if (key.private == null) { return null }
+      console.log("Found at least one master")
       return key
     }
   }
@@ -201,13 +234,23 @@ const rsaDecryptChunks = (chunkedStr, key) => {
   return result
 }
 
-const getKeys = (password, numKeys, numReservedKeys) => {
-  let master = generateKey(password);
+const getKeys = (password, numKeys, numReservedKeys, isAppendMode, masterKey) => {
   let keys = [];
-  keys.push(master);
+  let master = masterKey
+  if (!isAppendMode) {
+    // Not append mode. Generate a new master password
+    console.log("is not append mode")
+    master = generateKey(password);
+    keys.push(master)
+  } else {
+    console.log("Running in append mode. Keys required = " + numKeys + ": Reserved = " + numReservedKeys)
+  }
+
+  //console.log("master is here " + JSON.stringify(master));
 
   let reservedCount = 0;
   for (var i = 0; i < numKeys; i++) {
+    console.log("Creating key " + i)
     var keypair = ursa.generatePrivateKey(2048);
     let key = {};
     key.public = convertPemToString(keypair.toPublicPem().toString());
@@ -276,11 +319,45 @@ const decMasterKey = (key, password) => {
   }
 }
 
+loadKeysFromDB = async(() => {  
+  return models.Keys.findAll({});
+})
+
+loadMasterKey = async( () => {
+  let password = await(getDbPassword());
+  existingKeys = await(loadKeysFromDB());
+  existingKeys = R.map(key=>key.dataValues,existingKeys);
+  console.log("keys count = " + existingKeys.length)
+  return getMasterKey(existingKeys);
+})
+
+getMasterPassword = (resolve,reject) => {
+  password = process.env.ENTRY_PASS;
+  resolve(password);
+};
+
+getDbPassword = () => {
+  return new Promise((resolve, reject) => {
+    getMasterPassword(resolve, reject);
+  });
+};
+
 if (process.argv.length == 2) {
   console.log("Running in dev mode.")
-  getPasswordFromUser()
+  bulkCreateKeysUser()
 } else {
-  console.log("Running in silent mode. Looking for master env vars..")
-  getPassword()
+  loadMasterKey().then((data) => {
+    if (data === undefined) {
+      console.log("No master key found");
+      console.log("Running in silent CREATE mode. Looking for master env vars..")
+      bulkCreateKeys()
+    } else {
+      if (process.env.APPEND === "true") {
+        console.log("Running in silent APPEND mode. Looking for master env vars..")
+        bulkAppendKeys(data)
+      } else {
+        console.log("No changes done to keys in db")
+      }
+    }
+  })
 }
-
