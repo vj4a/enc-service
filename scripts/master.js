@@ -83,8 +83,10 @@ function getPassword() {
       console.log("Keys successfully written to DB");
       delete schema.properties.numKeys;
       if (verifyEncryption(keys, password)) {
-          console.log("Verification successful...")
-        }
+        console.log("Verification successful...")
+      } else {
+        console.log("Error verification of keys")
+      }
       })
     .catch(err => {
       console.log("Error adding keys to db", err);
@@ -123,6 +125,7 @@ const createZip = (inputFile) => {
 }
 
 const verifyEncryption = (keys, password) => {
+  var result = false;
   let decryptedKeys = []
   let masterKey = getMasterKey(keys)
   if (masterKey != null) {
@@ -131,21 +134,19 @@ const verifyEncryption = (keys, password) => {
       if (keys[i]["type"] == "OTHER") {
         let key = {}
         key.public = keys[i]["public"]
-        key.private = rsaDecryption(keys[i]["private"], masterKey.private)
+        key.private = rsaDecryptChunks(keys[i]["private"], masterKey.private)
         key.type = keys[i]["type"]
         key.active = keys[i]["active"]
         key.reserved = keys[i]["reserved"]
         decryptedKeys.push(key)
       }
     }
-    if (process.argv.length == 2) {
-      if (writeToFile("decryptedKeys.json", decryptedKeys)) {
-        createZip("decryptedKeys.json")
-        return true
-      }
+    if (process.argv.length == 2 && writeToFile("decryptedKeys.json", decryptedKeys)) {
+      createZip("decryptedKeys.json")
     }
+    result = true
   }
-  return false
+  return result
 }
 
 const getMasterKey = (keys) => {
@@ -162,6 +163,44 @@ const getMasterKey = (keys) => {
   }
 }
 
+const convertPemToString = (pemKey) => {
+  var pemKeyArray = pemKey.split('\n')
+  var stringPemKey = "";
+  for (var i = 1; i < pemKeyArray.length - 2; i++) {
+    stringPemKey += pemKeyArray[i]
+  }
+
+  // console.log("newlines count in this key = " + pemKeyArray.length)
+  // console.log("stringPemKey length = " + stringPemKey.length)
+
+  return stringPemKey
+}
+
+/**
+ * Chunking the large private key to chunks of 424.
+ * 424 is a number that we recognized was working fine and the same
+ * is being used here.
+ * @param {string} pemKey 
+ */
+const chunkifyPemString = (pemKey) => {
+  var pemKeyString = convertPemToString(pemKey)
+
+  var pemKeyArray = pemKeyString.match(/.{1,424}/g);
+  return pemKeyArray
+}
+
+// Dechunk
+const rsaDecryptChunks = (chunkedStr, key) => {
+  var arrChunks = chunkedStr.split("|")
+  
+  let result = ""
+  for (idx = 0; idx < arrChunks.length; idx++) {
+    result += rsaDecryption(arrChunks[idx], key)
+  }
+
+  return result
+}
+
 const getKeys = (password, numKeys, numReservedKeys) => {
   let master = generateKey(password);
   let keys = [];
@@ -169,10 +208,25 @@ const getKeys = (password, numKeys, numReservedKeys) => {
 
   let reservedCount = 0;
   for (var i = 0; i < numKeys; i++) {
-    var keypair = ursa.generatePrivateKey(512);
+    var keypair = ursa.generatePrivateKey(2048);
     let key = {};
     key.public = convertPemToString(keypair.toPublicPem().toString());
-    key.private = rsaEncryption(convertPemToString(keypair.toPrivatePem().toString()), master.public);
+    let privatePem = keypair.toPrivatePem().toString();
+    let chunks = chunkifyPemString(privatePem);
+    let encChunks = ""
+
+    for (idx = 0; idx < chunks.length; idx++) {
+      encChunks += rsaEncryption(chunks[idx], master.public) + "|"
+    }
+    // trim off the last pipe symbol
+    key.private = encChunks.slice(0, -1);
+
+    // | when base64 will result in fA==
+    // When | or its base64 equivalent is put into encryption, it will always result in a
+    // long string and therefore it is okay to use pipe | as a separator for the chunks.
+    // console.log(rsaEncryption("fA==", master.public))
+    // console.log(rsaEncryption("|", master.public))
+
     key.type = "OTHER";
     key.active = true;
     key.reserved = (reservedCount < numReservedKeys);
@@ -209,15 +263,6 @@ const rsaDecryption = (message, privateKey) => {
   var crt = ursa.createPrivateKey('-----BEGIN RSA PRIVATE KEY-----\n' + privateKey + '\n' + '-----END RSA PRIVATE KEY-----')
   return crt.decrypt(message, 'base64', 'utf8', ursa.RSA_PKCS1_PADDING);
 };
-
-const convertPemToString = (pemKey) => {
-  var pemKeyArray = pemKey.split('\n')
-  var stringPemKey = "";
-  for (var i = 1; i < pemKeyArray.length - 2; i++) {
-    stringPemKey += pemKeyArray[i]
-  }
-  return stringPemKey
-}
 
 const decMasterKey = (key, password) => {
   try {
