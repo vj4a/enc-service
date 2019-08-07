@@ -1,16 +1,12 @@
 #!/bin/bash
 # Build script
-set -o errexit
-e () {
-    echo $( echo ${1} | jq ".${2}" | sed 's/\"//g')
-}
-m=$(./metadata.sh)
-commit_hash=$1
+set -eo pipefail
 
-org=sunbird
-name=$(e "${m}" "name")
-version=$(e "${m}" "version")
+build_tag=$1
+name=enc_service
+node=$2
+org=$3
 
-[[ -f code.tar.gz ]] && rm -rf code.tar.gz
-git archive --format=tar.gz ${commit_hash} --output=code.tar.gz 
-docker build -f ./Dockerfile --label commitHash=${commit_hash} -t ${org}/${name}:${version}-bronze .
+docker build -f ./Dockerfile --label commitHash=$(git rev-parse --short HEAD) -t ${org}/${name}:${build_tag} .
+
+echo {\"image_name\" : \"${name}\", \"image_tag\" : \"${build_tag}\", \"node_name\" : \"$node\"} > metadata.json
