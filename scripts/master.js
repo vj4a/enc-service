@@ -50,7 +50,7 @@ function bulkCreateKeysUser() {
       return console.log(err);
     }
     password = result.password;
-    var keys = getKeys(password, result.numKeys, result.numReservedKeys, true)
+    var keys = getKeys(password, result.numKeys, result.numReservedKeys, false)
     if (writeToFile("./keys/keys.json", keys)) {
       console.log("Keys created...")
     }
