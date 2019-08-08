@@ -11,7 +11,8 @@ const config = {
     },
     "scheme":"PKCS1",
     "version":"1.0.0",
-    "hashAlgorithm": "sha256"
+    "hashAlgorithm": "sha256",
+    "logging": false
   },
   "prod": {
     "username": process.env.DB_USER,
@@ -25,7 +26,8 @@ const config = {
     },
     "scheme":"PKCS1",
     "version":"1.0.0",
-    "hashAlgorithm": "sha256"
+    "hashAlgorithm": "sha256",
+    "logging": false
   }
 }
 
