@@ -7,7 +7,7 @@ const config = {
     "dialect": process.env.DB_DIALECT || "postgres",
     ssl  : {
       rejectUnauthorized: process.env.DB_REJECT_UNAUTHORIZED || false,
-      ca : fs.readFileSync(process.env.DB_CERTFILE_PATH )
+      ca : fs.readFileSync(process.env.DB_SSL_CERT_PATH )
     },    
     "benchmark":true,
     "pool":{
@@ -27,7 +27,7 @@ const config = {
     "dialect": process.env.DB_DIALECT || "postgres",
     ssl  : {
       rejectUnauthorized: process.env.DB_REJECT_UNAUTHORIZED || false,
-      ca : fs.readFileSync(process.env.DB_CERTFILE_PATH )
+      ca : fs.readFileSync(process.env.DB_SSL_CERT_PATH )
     },       
     "pool":{
       max:300
