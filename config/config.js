@@ -7,9 +7,10 @@ const config = {
     "database": process.env.DB_NAME ||"dbname",
     "host":  process.env.DB_HOST|| "localhost",
     "dialect": process.env.DB_DIALECT || "postgres",
-    "ssl"  : {
-      "rejectUnauthorized": false //process.env.DB_REJECT_UNAUTHORIZED || false,
-      //ca : fs.existsSync(process.env.DB_SSL_CERT_PATH) ? fs.readFileSync(process.env.DB_SSL_CERT_PATH) : ""
+    "dialectOptions": {
+      "ssl": {
+        "rejectUnauthorized": false, // Explicitly disabling the ssl by this flag
+      }
     },    
     "benchmark":true,
     "pool":{
@@ -27,10 +28,11 @@ const config = {
     "host": process.env.DB_HOST,
     "port" : process.env.DB_PORT || 9999,
     "dialect": process.env.DB_DIALECT || "postgres",
-    "ssl"  : {
-      "rejectUnauthorized": false//process.env.DB_REJECT_UNAUTHORIZED || false,
-      // ca : fs.existsSync(process.env.DB_SSL_CERT_PATH) ? fs.readFileSync(process.env.DB_SSL_CERT_PATH) : ""
-    },       
+    "dialectOptions": {
+      "ssl": {
+        "rejectUnauthorized": false, // Explicitly disabling the ssl by this flag
+      }
+    },        
     "pool":{
       max:300
     },
