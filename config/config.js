@@ -9,7 +9,7 @@ const config = {
     "dialect": process.env.DB_DIALECT || "postgres",
     ssl  : {
       rejectUnauthorized: process.env.DB_REJECT_UNAUTHORIZED || false,
-      ca : fs.readFileSync(process.env.DB_SSL_CERT_PATH ) ||
+      ca : fs.existsSync(process.env.DB_SSL_CERT_PATH) ? fs.readFileSync(process.env.DB_SSL_CERT_PATH) : ""
     },    
     "benchmark":true,
     "pool":{
