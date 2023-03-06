@@ -1,3 +1,5 @@
+var fs = require('fs');
+
 const config = {
   "development": {
     "username": process.env.DB_USER || "username",
