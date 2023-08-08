@@ -9,7 +9,7 @@ const config = {
     "dialect": process.env.DB_DIALECT || "postgres",
     "dialectOptions": {
       "ssl": {
-        "rejectUnauthorized": false, // Explicitly disabling the ssl by this flag
+        "rejectUnauthorized": process.env.SSL_REJECT_UNAUTHORIZED || false, 
       }
     },    
     "benchmark":true,
@@ -30,7 +30,7 @@ const config = {
     "dialect": process.env.DB_DIALECT || "postgres",
     "dialectOptions": {
       "ssl": {
-        "rejectUnauthorized": false, // Explicitly disabling the ssl by this flag
+        "rejectUnauthorized": process.env.SSL_REJECT_UNAUTHORIZED || false, 
       }
     },        
     "pool":{
