@@ -1,3 +1,5 @@
+var fs = require('fs');
+
 const config = {
   "development": {
     "username": process.env.DB_USER || "username",
@@ -5,6 +7,11 @@ const config = {
     "database": process.env.DB_NAME ||"dbname",
     "host":  process.env.DB_HOST|| "localhost",
     "dialect": process.env.DB_DIALECT || "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "rejectUnauthorized": process.env.SSL_REJECT_UNAUTHORIZED || false, 
+      }
+    },    
     "benchmark":true,
     "pool":{
       max:300
@@ -21,6 +28,11 @@ const config = {
     "host": process.env.DB_HOST,
     "port" : process.env.DB_PORT || 9999,
     "dialect": process.env.DB_DIALECT || "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "rejectUnauthorized": process.env.SSL_REJECT_UNAUTHORIZED || false, 
+      }
+    },        
     "pool":{
       max:300
     },
